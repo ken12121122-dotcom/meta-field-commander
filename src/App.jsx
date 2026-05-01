@@ -1,22 +1,15 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  Sparkles,
-  ShieldCheck,
-  Map,
-  Swords,
-  BrainCircuit,
-  TerminalSquare,
   ArrowRight,
-  Plus,
-  ClipboardList,
+  BrainCircuit,
   CheckCircle2,
-  Trash2,
+  ClipboardList,
   RotateCcw,
+  ShieldCheck,
+  Swords,
+  Trash2,
 } from "lucide-react";
-import { homeMeta, homeModules, homeStats } from "./data/homeConfig";
 import { getTaskReward, taskTypes } from "./data/taskConfig";
-
-const iconMap = { BrainCircuit, Map, Swords, ShieldCheck };
 
 const STORAGE_KEY = "meta-field-commander-tasks";
 
@@ -29,13 +22,19 @@ function loadSavedTasks() {
   }
 }
 
-function clamp(value) {
-  return Math.max(0, Math.min(100, value));
-}
+const baseStats = {
+  能力: 10,
+  資本: 8,
+  治理: 6,
+  資安: 5,
+  體力: 7,
+  自由: 4,
+  信任: 5,
+};
 
-function App() {
+export default function App() {
   const [taskText, setTaskText] = useState("");
-  const [taskType, setTaskType] = useState("學習");
+  const [taskType, setTaskType] = useState(taskTypes?.[0] ?? "學習");
   const [tasks, setTasks] = useState(() => loadSavedTasks());
   const [bossResult, setBossResult] = useState(null);
 
@@ -43,21 +42,65 @@ function App() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
   }, [tasks]);
 
+  const completedTasks = useMemo(
+    () => tasks.filter((task) => task.done),
+    [tasks]
+  );
+
+  const totalReward = completedTasks.reduce((sum, task) => {
+    const reward = getTaskReward(task.type);
+    return sum + Object.values(reward).reduce((a, b) => a + b, 0);
+  }, 0);
+
+  const stats = useMemo(() => {
+    const next = { ...baseStats };
+
+    completedTasks.forEach((task) => {
+      const reward = getTaskReward(task.type);
+      Object.entries(reward).forEach(([key, value]) => {
+        next[key] = (next[key] ?? 0) + value;
+      });
+    });
+
+    return next;
+  }, [completedTasks]);
+
+  const completionRate =
+    tasks.length === 0 ? 0 : Math.round((completedTasks.length / tasks.length) * 100);
+
+  const dailyStatus =
+    tasks.length === 0
+      ? "尚未啟動"
+      : completionRate >= 80
+        ? "高效推進"
+        : completionRate >= 40
+          ? "穩定累積"
+          : "需要收斂";
+
+  const bossPower = completionRate + totalReward;
+  const bossDifficulty = 75;
+  const bossWinRate = Math.max(
+    5,
+    Math.min(95, Math.round((bossPower / bossDifficulty) * 70))
+  );
+
   const addTask = () => {
-    const trimmed = taskText.trim();
-    if (!trimmed) return;
+    const cleanText = taskText.trim();
+    if (!cleanText) return;
 
     setTasks((prev) => [
       {
         id: crypto.randomUUID(),
-        text: trimmed,
+        text: cleanText,
         type: taskType,
         done: false,
+        createdAt: new Date().toISOString(),
       },
       ...prev,
     ]);
 
     setTaskText("");
+    setBossResult(null);
   };
 
   const toggleTask = (id) => {
@@ -70,6 +113,7 @@ function App() {
 
   const deleteTask = (id) => {
     setTasks((prev) => prev.filter((task) => task.id !== id));
+    setBossResult(null);
   };
 
   const clearTasks = () => {
@@ -77,93 +121,49 @@ function App() {
     setBossResult(null);
   };
 
-  const completedTasks = tasks.filter((task) => task.done);
+  const challengeBoss = () => {
+    const victory = bossPower >= bossDifficulty;
 
-  const currentStats = useMemo(() => {
-    const next = homeStats.map((stat) => ({ ...stat }));
-
-    completedTasks.forEach((task) => {
-      const reward = getTaskReward(task.type);
-      Object.entries(reward).forEach(([label, value]) => {
-        const target = next.find((stat) => stat.label === label);
-        if (target) target.value = clamp(target.value + value);
-      });
+    setBossResult({
+      victory,
+      title: victory ? "稽核壓制成功" : "稽核暫時壓過你",
+      text: victory
+        ? "你用今日任務紀錄與成長數據擋下了混亂稽核獸。治理場域穩定度上升。"
+        : "證據鏈還不夠完整。先完成更多任務，累積今日成長，再回來挑戰。",
     });
-
-    return next;
-  }, [completedTasks]);
-
-  const totalReward = completedTasks.reduce((sum, task) => {
-    const reward = getTaskReward(task.type);
-    return sum + Object.values(reward).reduce((a, b) => a + b, 0);
-  }, 0);
+  };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <section className="mx-auto flex min-h-screen max-w-5xl flex-col px-5 py-8">
-        <header className="mb-8 flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold tracking-[0.35em] text-cyan-300">
-              {homeMeta.eyebrow}
-            </p>
-            <h1 className="mt-3 text-4xl font-black tracking-tight">
-              {homeMeta.title}
-            </h1>
-            <p className="mt-2 text-sm text-slate-400">{homeMeta.subtitle}</p>
+    <main className="min-h-screen bg-slate-950 px-4 py-6 text-slate-100">
+      <section className="mx-auto max-w-5xl">
+        <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5 shadow-2xl">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-black tracking-[0.3em] text-cyan-200">
+                META FIELD COMMANDER
+              </p>
+              <h1 className="mt-3 text-3xl font-black">元場域指揮官</h1>
+              <p className="mt-3 text-sm leading-6 text-slate-300">
+                v3.0 可玩 MVP：任務新增、完成、刪除、清空、每日結算與 Boss 戰。
+              </p>
+            </div>
+            <div className="rounded-2xl bg-cyan-300 px-4 py-2 text-sm font-black text-slate-950">
+              {dailyStatus}
+            </div>
           </div>
 
-          <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-3">
-            <Sparkles className="h-6 w-6 text-cyan-200" />
-          </div>
-        </header>
-
-        <section className="grid gap-4 rounded-[2rem] border border-white/10 bg-white/[0.04] p-5 shadow-2xl">
-          <div>
-            <p className="text-sm font-bold text-amber-200">
-              v3.0 可玩 MVP 封板
-            </p>
-            <h2 className="mt-2 text-2xl font-black">今日啟動流程</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-              {homeMeta.description}
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <button className="flex w-full items-center justify-center gap-2 rounded-2xl bg-cyan-300 px-5 py-4 text-sm font-black text-slate-950 shadow-lg shadow-cyan-300/20">
-              開始今日流程
-              <ArrowRight className="h-5 w-5" />
-            </button>
-            <button
-              onClick={clearTasks}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-4 text-sm font-black text-slate-200"
-            >
-              <RotateCcw className="h-5 w-5" />
-              清空今日任務
-            </button>
-          </div>
-        </section>
-
-        <section className="mt-6 rounded-[2rem] border border-cyan-200/10 bg-black/20 p-5">
-          <div className="mb-4 flex items-center gap-2">
-            <ClipboardList className="h-5 w-5 text-cyan-200" />
-            <h2 className="text-lg font-black">今日任務輸入器</h2>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-[1fr_160px_auto]">
+          <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_160px_auto]">
             <input
               value={taskText}
               onChange={(event) => setTaskText(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") addTask();
-              }}
-              placeholder="輸入今日任務，例如：整理資安清單 30 分鐘"
-              className="rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-cyan-300/60"
+              placeholder="輸入今日任務，例如：整理資安清單"
+              className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500"
             />
 
             <select
               value={taskType}
               onChange={(event) => setTaskType(event.target.value)}
-              className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white outline-none focus:border-cyan-300/60"
+              className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none"
             >
               {taskTypes.map((type) => (
                 <option key={type} value={type}>
@@ -174,73 +174,26 @@ function App() {
 
             <button
               onClick={addTask}
-              className="flex items-center justify-center gap-2 rounded-2xl bg-emerald-300 px-5 py-3 text-sm font-black text-slate-950 shadow-lg shadow-emerald-300/20"
+              className="flex items-center justify-center gap-2 rounded-2xl bg-cyan-300 px-5 py-3 text-sm font-black text-slate-950"
             >
-              <Plus className="h-5 w-5" />
-              加入任務
+              新增任務
+              <ArrowRight className="h-4 w-4" />
             </button>
           </div>
 
-          <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-black text-white">今日任務清單</p>
-                <p className="mt-1 text-[11px] text-slate-500">
-                  任務會自動保存於此裝置
-                </p>
-              </div>
-              <p className="text-xs text-slate-400">
-                已完成 {completedTasks.length} / {tasks.length}｜成長 +{totalReward}
-              </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <button
+              onClick={clearTasks}
+              className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-3 text-sm font-black text-slate-200"
+            >
+              <RotateCcw className="h-4 w-4" />
+              清空今日任務
+            </button>
+            <div className="rounded-2xl border border-white/10 bg-black/20 px-5 py-3 text-sm text-slate-300">
+              已完成 {completedTasks.length} / {tasks.length}｜今日成長 +{totalReward}
             </div>
-
-            {tasks.length === 0 ? (
-              <p className="rounded-xl border border-dashed border-white/10 p-4 text-center text-sm text-slate-500">
-                尚未加入任務。先丟一顆任務種子進來吧。
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {tasks.map((task) => {
-                  const reward = getTaskReward(task.type);
-                  return (
-                    <button
-                      key={task.id}
-                      onClick={() => toggleTask(task.id)}
-                      className="flex w-full items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-900/70 p-3 text-left"
-                    >
-                      <div>
-                        <span className="mb-1 inline-flex rounded-full bg-cyan-300/10 px-2 py-1 text-[10px] font-black text-cyan-100">
-                          {task.type}
-                        </span>
-                        <p
-                          className={`text-sm font-bold ${
-                            task.done
-                              ? "text-slate-500 line-through"
-                              : "text-slate-100"
-                          }`}
-                        >
-                          {task.text}
-                        </p>
-                        <p className="mt-1 text-[11px] text-slate-500">
-                          獎勵：
-                          {Object.entries(reward)
-                            .map(([key, value]) => `${key}+${value}`)
-                            .join("、")}
-                        </p>
-                      </div>
-
-                      <CheckCircle2
-                        className={`h-5 w-5 shrink-0 ${
-                          task.done ? "text-emerald-300" : "text-slate-600"
-                        }`}
-                      />
-                    </button>
-                  );
-                })}
-              </div>
-            )}
           </div>
-        </section>
+        </div>
 
         <section className="mt-6 rounded-[2rem] border border-amber-200/10 bg-amber-200/[0.06] p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
@@ -250,51 +203,15 @@ function App() {
               </p>
               <h2 className="mt-2 text-lg font-black">每日結算面板</h2>
             </div>
-            <div className="rounded-2xl bg-amber-200 px-4 py-2 text-sm font-black text-slate-950">
-              {dailyStatus}
-            </div>
+            <ClipboardList className="h-7 w-7 text-amber-200" />
           </div>
 
           <div className="grid gap-3 sm:grid-cols-4">
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-              <p className="text-xs text-slate-400">任務總數</p>
-              <p className="mt-2 text-2xl font-black">{tasks.length}</p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-              <p className="text-xs text-slate-400">完成任務</p>
-              <p className="mt-2 text-2xl font-black">{completedTasks.length}</p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-              <p className="text-xs text-slate-400">完成率</p>
-              <p className="mt-2 text-2xl font-black">{completionRate}%</p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-              <p className="text-xs text-slate-400">今日成長</p>
-              <p className="mt-2 text-2xl font-black">+{totalReward}</p>
-            </div>
+            <Metric label="任務總數" value={tasks.length} />
+            <Metric label="完成任務" value={completedTasks.length} />
+            <Metric label="完成率" value={`${completionRate}%`} />
+            <Metric label="今日成長" value={`+${totalReward}`} />
           </div>
-
-          <p className="mt-4 text-xs leading-5 text-slate-400">
-            今日結算會根據已完成任務即時更新。這是未來每日回顧、Boss 戰門檻與能力成長曲線的基礎。
-          </p>
-        </section>
-
-        <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {homeModules.map((item) => {
-            const Icon = iconMap[item.icon] ?? BrainCircuit;
-            return (
-              <article
-                key={item.title}
-                className="rounded-3xl border border-white/10 bg-white/[0.035] p-4"
-              >
-                <Icon className="mb-3 h-6 w-6 text-cyan-200" />
-                <h3 className="font-black">{item.title}</h3>
-                <p className="mt-2 text-xs leading-5 text-slate-400">
-                  {item.desc}
-                </p>
-              </article>
-            );
-          })}
         </section>
 
         <section className="mt-6 rounded-[2rem] border border-red-300/20 bg-red-500/[0.06] p-5">
@@ -308,26 +225,17 @@ function App() {
                 牠會追問：你今天到底完成了什麼？你的證據鏈在哪裡？
               </p>
             </div>
-            <div className="rounded-2xl border border-red-200/20 bg-black/20 px-4 py-3 text-center">
-              <p className="text-[10px] text-slate-400">勝率</p>
-              <p className="text-2xl font-black text-red-100">{bossWinRate}%</p>
-            </div>
+            <Swords className="h-8 w-8 text-red-200" />
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-              <p className="text-xs text-slate-400">戰力</p>
-              <p className="mt-2 text-2xl font-black">{bossPower}</p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-              <p className="text-xs text-slate-400">難度</p>
-              <p className="mt-2 text-2xl font-black">{bossDifficulty}</p>
-            </div>
+            <Metric label="戰力" value={bossPower} />
+            <Metric label="難度" value={bossDifficulty} />
             <button
               onClick={challengeBoss}
-              className="rounded-2xl bg-red-300 px-5 py-4 text-sm font-black text-slate-950 shadow-lg shadow-red-300/20"
+              className="rounded-2xl bg-red-300 px-5 py-4 text-sm font-black text-slate-950"
             >
-              挑戰 Boss
+              挑戰 Boss｜勝率 {bossWinRate}%
             </button>
           </div>
 
@@ -347,36 +255,106 @@ function App() {
           )}
         </section>
 
-        <section className="mt-6 rounded-[2rem] border border-white/10 bg-black/20 p-5">
-          <div className="mb-4 flex items-center gap-2">
-            <TerminalSquare className="h-5 w-5 text-emerald-200" />
-            <h2 className="text-lg font-black">七大能力值</h2>
+        <section className="mt-6 grid gap-4 lg:grid-cols-[1fr_1fr]">
+          <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
+            <div className="mb-4 flex items-center gap-2">
+              <BrainCircuit className="h-5 w-5 text-cyan-200" />
+              <h2 className="text-lg font-black">七大能力值</h2>
+            </div>
+
+            <div className="grid gap-3">
+              {Object.entries(stats).map(([key, value]) => (
+                <div key={key}>
+                  <div className="mb-1 flex justify-between text-xs">
+                    <span className="text-slate-300">{key}</span>
+                    <span className="font-black text-cyan-100">{value}</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-white/10">
+                    <div
+                      className="h-2 rounded-full bg-cyan-300"
+                      style={{ width: `${Math.min(100, value * 6)}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="grid gap-3">
-            {currentStats.map((stat) => (
-              <div key={stat.label}>
-                <div className="mb-1 flex justify-between text-xs">
-                  <span className="font-bold text-slate-300">{stat.label}</span>
-                  <span className="text-cyan-200">{stat.value}</span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                  <div
-                    className="h-full rounded-full bg-cyan-300"
-                    style={{ width: `${stat.value}%` }}
-                  />
-                </div>
+          <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
+            <div className="mb-4 flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-emerald-200" />
+              <h2 className="text-lg font-black">今日任務清單</h2>
+            </div>
+
+            {tasks.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-white/10 p-5 text-sm text-slate-400">
+                尚未新增任務。先丟一顆任務種子進來，今天的場域就會開始長。
+              </p>
+            ) : (
+              <div className="grid gap-3">
+                {tasks.map((task) => {
+                  const reward = getTaskReward(task.type);
+
+                  return (
+                    <div
+                      key={task.id}
+                      className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-900/70 p-3"
+                    >
+                      <button
+                        onClick={() => toggleTask(task.id)}
+                        className="flex flex-1 items-center justify-between gap-3 text-left"
+                      >
+                        <div>
+                          <span className="mb-1 inline-flex rounded-full bg-cyan-300/10 px-2 py-1 text-[10px] font-black text-cyan-100">
+                            {task.type}
+                          </span>
+                          <p
+                            className={`text-sm font-bold ${
+                              task.done
+                                ? "text-slate-500 line-through"
+                                : "text-slate-100"
+                            }`}
+                          >
+                            {task.text}
+                          </p>
+                          <p className="mt-1 text-[11px] text-slate-500">
+                            獎勵：
+                            {Object.entries(reward)
+                              .map(([key, value]) => `${key}+${value}`)
+                              .join("、")}
+                          </p>
+                        </div>
+
+                        <CheckCircle2
+                          className={`h-5 w-5 ${
+                            task.done ? "text-emerald-300" : "text-slate-600"
+                          }`}
+                        />
+                      </button>
+
+                      <button
+                        onClick={() => deleteTask(task.id)}
+                        className="grid h-9 w-9 place-items-center rounded-xl border border-red-300/20 bg-red-300/10 text-red-100"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
-            ))}
+            )}
           </div>
         </section>
-
-        <footer className="mt-auto pt-8 text-center text-xs text-slate-500">
-          v3.0｜可玩 MVP 封板｜任務可新增、完成、刪除、清空、結算與挑戰 Boss
-        </footer>
       </section>
     </main>
   );
 }
 
-export default App;
+function Metric({ label, value }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+      <p className="text-xs text-slate-400">{label}</p>
+      <p className="mt-2 text-2xl font-black text-white">{value}</p>
+    </div>
+  );
+}
