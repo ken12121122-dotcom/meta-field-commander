@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Sparkles,
   ShieldCheck,
@@ -15,6 +15,17 @@ import { homeMeta, homeModules, homeStats } from "./data/homeConfig";
 import { getTaskReward, rewardMap, taskTypes } from "./data/taskConfig";
 
 const iconMap = { BrainCircuit, Map, Swords, ShieldCheck };
+
+const STORAGE_KEY = "meta-field-commander-tasks";
+
+function loadSavedTasks() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
 
 const taskTypes = ["學習", "工作", "資安", "治理", "健身", "生活", "創作"];
 
@@ -35,7 +46,11 @@ function clamp(value) {
 function App() {
   const [taskText, setTaskText] = useState("");
   const [taskType, setTaskType] = useState("學習");
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] = useState(() => loadSavedTasks());
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  }, [tasks]);
 
   const addTask = () => {
     const trimmed = taskText.trim();
@@ -158,8 +173,13 @@ function App() {
           </div>
 
           <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-black text-white">今日任務清單</p>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-black text-white">今日任務清單</p>
+                <p className="mt-1 text-[11px] text-slate-500">
+                  任務會自動保存於此裝置
+                </p>
+              </div>
               <p className="text-xs text-slate-400">
                 已完成 {completedTasks.length} / {tasks.length}｜成長 +{totalReward}
               </p>
