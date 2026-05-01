@@ -8,39 +8,14 @@ import {
   TerminalSquare,
   ArrowRight,
 } from "lucide-react";
+import { homeMeta, homeModules, homeStats } from "./data/homeConfig";
 
-const stats = [
-  { label: "體力", value: 42 },
-  { label: "資本", value: 18 },
-  { label: "資安", value: 36 },
-  { label: "治理", value: 51 },
-  { label: "能力", value: 64 },
-  { label: "自由", value: 27 },
-  { label: "信任", value: 44 },
-];
-
-const modules = [
-  {
-    title: "今日任務",
-    desc: "把現實任務轉成可完成的成長行動。",
-    icon: BrainCircuit,
-  },
-  {
-    title: "場域地圖",
-    desc: "管理個人、工廠、資安、學習與資本場域。",
-    icon: Map,
-  },
-  {
-    title: "Boss 戰",
-    desc: "面對稽核、壓力、拖延與混亂源頭。",
-    icon: Swords,
-  },
-  {
-    title: "資安治理",
-    desc: "保留 A/B/C 三區隔離與最低風險路線。",
-    icon: ShieldCheck,
-  },
-];
+const iconMap = {
+  BrainCircuit,
+  Map,
+  Swords,
+  ShieldCheck,
+};
 
 function App() {
   return (
@@ -49,13 +24,13 @@ function App() {
         <header className="mb-8 flex items-center justify-between">
           <div>
             <p className="text-xs font-bold tracking-[0.35em] text-cyan-300">
-              META FIELD COMMANDER
+              {homeMeta.eyebrow}
             </p>
             <h1 className="mt-3 text-4xl font-black tracking-tight">
-              元場域指揮官
+              {homeMeta.title}
             </h1>
             <p className="mt-2 text-sm text-slate-400">
-              把混亂馴化成自由
+              {homeMeta.subtitle}
             </p>
           </div>
 
@@ -67,14 +42,11 @@ function App() {
         <section className="grid gap-4 rounded-[2rem] border border-white/10 bg-white/[0.04] p-5 shadow-2xl">
           <div>
             <p className="text-sm font-bold text-amber-200">
-              v2.2 正式首頁測試版
+              {homeMeta.version} {homeMeta.label}
             </p>
-            <h2 className="mt-2 text-2xl font-black">
-              今日啟動流程
-            </h2>
+            <h2 className="mt-2 text-2xl font-black">今日啟動流程</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-              這是一款現實回饋型成長 RPG。你輸入真實任務，系統將它轉成能力值、
-              場域建築、角色信任與 Boss 挑戰，讓人生治理變成可遊玩的成長系統。
+              {homeMeta.description}
             </p>
           </div>
 
@@ -85,8 +57,8 @@ function App() {
         </section>
 
         <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {modules.map((item) => {
-            const Icon = item.icon;
+          {homeModules.map((item) => {
+            const Icon = iconMap[item.icon] ?? BrainCircuit;
             return (
               <article
                 key={item.title}
@@ -109,7 +81,7 @@ function App() {
           </div>
 
           <div className="grid gap-3">
-            {stats.map((stat) => (
+            {homeStats.map((stat) => (
               <div key={stat.label}>
                 <div className="mb-1 flex justify-between text-xs">
                   <span className="font-bold text-slate-300">{stat.label}</span>
@@ -127,7 +99,7 @@ function App() {
         </section>
 
         <footer className="mt-auto pt-8 text-center text-xs text-slate-500">
-          v2.2｜正式專案首頁已接入｜下一步：資料層導入
+          {homeMeta.footer}
         </footer>
       </section>
     </main>
