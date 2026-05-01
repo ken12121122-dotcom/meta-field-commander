@@ -14,7 +14,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { homeMeta, homeModules, homeStats } from "./data/homeConfig";
-import { getTaskReward, rewardMap, taskTypes } from "./data/taskConfig";
+import { getTaskReward, taskTypes } from "./data/taskConfig";
 
 const iconMap = { BrainCircuit, Map, Swords, ShieldCheck };
 
@@ -28,18 +28,6 @@ function loadSavedTasks() {
     return [];
   }
 }
-
-const taskTypes = ["學習", "工作", "資安", "治理", "健身", "生活", "創作"];
-
-const rewardMap = {
-  學習: { 能力: 4, 自由: 1 },
-  工作: { 資本: 3, 治理: 2 },
-  資安: { 資安: 5, 治理: 1 },
-  治理: { 治理: 4, 信任: 2 },
-  健身: { 體力: 5, 自由: 1 },
-  生活: { 體力: 2, 自由: 3 },
-  創作: { 能力: 3, 信任: 1 },
-};
 
 function clamp(value) {
   return Math.max(0, Math.min(100, value));
