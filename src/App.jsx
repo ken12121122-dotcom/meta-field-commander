@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Sparkles,
   ShieldCheck,
@@ -7,6 +7,9 @@ import {
   BrainCircuit,
   TerminalSquare,
   ArrowRight,
+  Plus,
+  ClipboardList,
+  CheckCircle2,
 } from "lucide-react";
 import { homeMeta, homeModules, homeStats } from "./data/homeConfig";
 
@@ -17,7 +20,47 @@ const iconMap = {
   ShieldCheck,
 };
 
+const taskTypes = [
+  "學習",
+  "工作",
+  "資安",
+  "治理",
+  "健身",
+  "生活",
+  "創作",
+];
+
 function App() {
+  const [taskText, setTaskText] = useState("");
+  const [taskType, setTaskType] = useState("學習");
+  const [tasks, setTasks] = useState([]);
+
+  const addTask = () => {
+    const trimmed = taskText.trim();
+
+    if (!trimmed) return;
+
+    const nextTask = {
+      id: crypto.randomUUID(),
+      text: trimmed,
+      type: taskType,
+      done: false,
+    };
+
+    setTasks((prev) => [nextTask, ...prev]);
+    setTaskText("");
+  };
+
+  const toggleTask = (id) => {
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === id ? { ...task, done: !task.done } : task
+      )
+    );
+  };
+
+  const completedCount = tasks.filter((task) => task.done).length;
+
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto flex min-h-screen max-w-5xl flex-col px-5 py-8">
@@ -42,7 +85,7 @@ function App() {
         <section className="grid gap-4 rounded-[2rem] border border-white/10 bg-white/[0.04] p-5 shadow-2xl">
           <div>
             <p className="text-sm font-bold text-amber-200">
-              {homeMeta.version} {homeMeta.label}
+              v2.4 任務輸入器 MVP
             </p>
             <h2 className="mt-2 text-2xl font-black">今日啟動流程</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
@@ -54,6 +97,91 @@ function App() {
             開始今日流程
             <ArrowRight className="h-5 w-5" />
           </button>
+        </section>
+
+        <section className="mt-6 rounded-[2rem] border border-cyan-200/10 bg-black/20 p-5">
+          <div className="mb-4 flex items-center gap-2">
+            <ClipboardList className="h-5 w-5 text-cyan-200" />
+            <h2 className="text-lg font-black">今日任務輸入器</h2>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-[1fr_160px_auto]">
+            <input
+              value={taskText}
+              onChange={(event) => setTaskText(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") addTask();
+              }}
+              placeholder="輸入今日要完成的任務，例如：整理資安清單 30 分鐘"
+              className="rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-cyan-300/60"
+            />
+
+            <select
+              value={taskType}
+              onChange={(event) => setTaskType(event.target.value)}
+              className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white outline-none focus:border-cyan-300/60"
+            >
+              {taskTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+
+            <button
+              onClick={addTask}
+              className="flex items-center justify-center gap-2 rounded-2xl bg-emerald-300 px-5 py-3 text-sm font-black text-slate-950 shadow-lg shadow-emerald-300/20"
+            >
+              <Plus className="h-5 w-5" />
+              加入任務
+            </button>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-sm font-black text-white">今日任務清單</p>
+              <p className="text-xs text-slate-400">
+                已完成 {completedCount} / {tasks.length}
+              </p>
+            </div>
+
+            {tasks.length === 0 ? (
+              <p className="rounded-xl border border-dashed border-white/10 p-4 text-center text-sm text-slate-500">
+                尚未加入任務。先丟一顆任務種子進來吧。
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {tasks.map((task) => (
+                  <button
+                    key={task.id}
+                    onClick={() => toggleTask(task.id)}
+                    className="flex w-full items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-900/70 p-3 text-left"
+                  >
+                    <div>
+                      <span className="mb-1 inline-flex rounded-full bg-cyan-300/10 px-2 py-1 text-[10px] font-black text-cyan-100">
+                        {task.type}
+                      </span>
+                      <p
+                        className={`text-sm font-bold ${
+                          task.done
+                            ? "text-slate-500 line-through"
+                            : "text-slate-100"
+                        }`}
+                      >
+                        {task.text}
+                      </p>
+                    </div>
+
+                    <CheckCircle2
+                      className={`h-5 w-5 shrink-0 ${
+                        task.done ? "text-emerald-300" : "text-slate-600"
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </section>
 
         <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -99,7 +227,7 @@ function App() {
         </section>
 
         <footer className="mt-auto pt-8 text-center text-xs text-slate-500">
-          {homeMeta.footer}
+          v2.4｜任務輸入器 MVP 已接入｜下一步：任務轉能力值
         </footer>
       </section>
     </main>
