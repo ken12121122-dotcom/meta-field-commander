@@ -47,6 +47,7 @@ function App() {
   const [taskText, setTaskText] = useState("");
   const [taskType, setTaskType] = useState("學習");
   const [tasks, setTasks] = useState(() => loadSavedTasks());
+  const [bossResult, setBossResult] = useState(null);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
@@ -288,6 +289,56 @@ function App() {
           })}
         </section>
 
+        <section className="mt-6 rounded-[2rem] border border-red-300/20 bg-red-500/[0.06] p-5">
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-black tracking-[0.25em] text-red-200">
+                BOSS ENCOUNTER
+              </p>
+              <h2 className="mt-2 text-xl font-black">混亂稽核獸</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-300">
+                牠會追問：你今天到底完成了什麼？你的證據鏈在哪裡？
+              </p>
+            </div>
+            <div className="rounded-2xl border border-red-200/20 bg-black/20 px-4 py-3 text-center">
+              <p className="text-[10px] text-slate-400">勝率</p>
+              <p className="text-2xl font-black text-red-100">{bossWinRate}%</p>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <p className="text-xs text-slate-400">戰力</p>
+              <p className="mt-2 text-2xl font-black">{bossPower}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <p className="text-xs text-slate-400">難度</p>
+              <p className="mt-2 text-2xl font-black">{bossDifficulty}</p>
+            </div>
+            <button
+              onClick={challengeBoss}
+              className="rounded-2xl bg-red-300 px-5 py-4 text-sm font-black text-slate-950 shadow-lg shadow-red-300/20"
+            >
+              挑戰 Boss
+            </button>
+          </div>
+
+          {bossResult && (
+            <div
+              className={`mt-4 rounded-2xl border p-4 ${
+                bossResult.victory
+                  ? "border-emerald-300/20 bg-emerald-300/10"
+                  : "border-amber-300/20 bg-amber-300/10"
+              }`}
+            >
+              <p className="text-sm font-black text-white">{bossResult.title}</p>
+              <p className="mt-2 text-xs leading-5 text-slate-300">
+                {bossResult.text}
+              </p>
+            </div>
+          )}
+        </section>
+
         <section className="mt-6 rounded-[2rem] border border-white/10 bg-black/20 p-5">
           <div className="mb-4 flex items-center gap-2">
             <TerminalSquare className="h-5 w-5 text-emerald-200" />
@@ -313,7 +364,7 @@ function App() {
         </section>
 
         <footer className="mt-auto pt-8 text-center text-xs text-slate-500">
-          v2.8｜每日結算面板已接入｜下一步：第一個 Boss 戰
+          v2.9｜第一個 Boss 戰已接入｜下一步：可玩 MVP 封板
         </footer>
       </section>
     </main>
