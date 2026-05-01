@@ -10,6 +10,8 @@ import {
   Plus,
   ClipboardList,
   CheckCircle2,
+  Trash2,
+  RotateCcw,
 } from "lucide-react";
 import { homeMeta, homeModules, homeStats } from "./data/homeConfig";
 import { getTaskReward, rewardMap, taskTypes } from "./data/taskConfig";
@@ -78,6 +80,15 @@ function App() {
     );
   };
 
+  const deleteTask = (id) => {
+    setTasks((prev) => prev.filter((task) => task.id !== id));
+  };
+
+  const clearTasks = () => {
+    setTasks([]);
+    setBossResult(null);
+  };
+
   const completedTasks = tasks.filter((task) => task.done);
 
   const currentStats = useMemo(() => {
@@ -121,7 +132,7 @@ function App() {
         <section className="grid gap-4 rounded-[2rem] border border-white/10 bg-white/[0.04] p-5 shadow-2xl">
           <div>
             <p className="text-sm font-bold text-amber-200">
-              v2.5 任務完成 → 能力值變動
+              v3.0 可玩 MVP 封板
             </p>
             <h2 className="mt-2 text-2xl font-black">今日啟動流程</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
@@ -129,10 +140,19 @@ function App() {
             </p>
           </div>
 
-          <button className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-cyan-300 px-5 py-4 text-sm font-black text-slate-950 shadow-lg shadow-cyan-300/20">
-            開始今日流程
-            <ArrowRight className="h-5 w-5" />
-          </button>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <button className="flex w-full items-center justify-center gap-2 rounded-2xl bg-cyan-300 px-5 py-4 text-sm font-black text-slate-950 shadow-lg shadow-cyan-300/20">
+              開始今日流程
+              <ArrowRight className="h-5 w-5" />
+            </button>
+            <button
+              onClick={clearTasks}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-4 text-sm font-black text-slate-200"
+            >
+              <RotateCcw className="h-5 w-5" />
+              清空今日任務
+            </button>
+          </div>
         </section>
 
         <section className="mt-6 rounded-[2rem] border border-cyan-200/10 bg-black/20 p-5">
@@ -364,7 +384,7 @@ function App() {
         </section>
 
         <footer className="mt-auto pt-8 text-center text-xs text-slate-500">
-          v2.9｜第一個 Boss 戰已接入｜下一步：可玩 MVP 封板
+          v3.0｜可玩 MVP 封板｜任務可新增、完成、刪除、清空、結算與挑戰 Boss
         </footer>
       </section>
     </main>
