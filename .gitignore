@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.log
+*.zip
+my-game/
+.DS_Store
+.env
+.env.local
