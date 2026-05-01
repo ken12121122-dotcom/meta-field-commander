@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Sparkles,
   ShieldCheck,
@@ -13,22 +13,23 @@ import {
 } from "lucide-react";
 import { homeMeta, homeModules, homeStats } from "./data/homeConfig";
 
-const iconMap = {
-  BrainCircuit,
-  Map,
-  Swords,
-  ShieldCheck,
+const iconMap = { BrainCircuit, Map, Swords, ShieldCheck };
+
+const taskTypes = ["學習", "工作", "資安", "治理", "健身", "生活", "創作"];
+
+const rewardMap = {
+  學習: { 能力: 4, 自由: 1 },
+  工作: { 資本: 3, 治理: 2 },
+  資安: { 資安: 5, 治理: 1 },
+  治理: { 治理: 4, 信任: 2 },
+  健身: { 體力: 5, 自由: 1 },
+  生活: { 體力: 2, 自由: 3 },
+  創作: { 能力: 3, 信任: 1 },
 };
 
-const taskTypes = [
-  "學習",
-  "工作",
-  "資安",
-  "治理",
-  "健身",
-  "生活",
-  "創作",
-];
+function clamp(value) {
+  return Math.max(0, Math.min(100, value));
+}
 
 function App() {
   const [taskText, setTaskText] = useState("");
@@ -37,17 +38,18 @@ function App() {
 
   const addTask = () => {
     const trimmed = taskText.trim();
-
     if (!trimmed) return;
 
-    const nextTask = {
-      id: crypto.randomUUID(),
-      text: trimmed,
-      type: taskType,
-      done: false,
-    };
+    setTasks((prev) => [
+      {
+        id: crypto.randomUUID(),
+        text: trimmed,
+        type: taskType,
+        done: false,
+      },
+      ...prev,
+    ]);
 
-    setTasks((prev) => [nextTask, ...prev]);
     setTaskText("");
   };
 
@@ -59,7 +61,26 @@ function App() {
     );
   };
 
-  const completedCount = tasks.filter((task) => task.done).length;
+  const completedTasks = tasks.filter((task) => task.done);
+
+  const currentStats = useMemo(() => {
+    const next = homeStats.map((stat) => ({ ...stat }));
+
+    completedTasks.forEach((task) => {
+      const reward = rewardMap[task.type] ?? {};
+      Object.entries(reward).forEach(([label, value]) => {
+        const target = next.find((stat) => stat.label === label);
+        if (target) target.value = clamp(target.value + value);
+      });
+    });
+
+    return next;
+  }, [completedTasks]);
+
+  const totalReward = completedTasks.reduce((sum, task) => {
+    const reward = rewardMap[task.type] ?? {};
+    return sum + Object.values(reward).reduce((a, b) => a + b, 0);
+  }, 0);
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -72,9 +93,7 @@ function App() {
             <h1 className="mt-3 text-4xl font-black tracking-tight">
               {homeMeta.title}
             </h1>
-            <p className="mt-2 text-sm text-slate-400">
-              {homeMeta.subtitle}
-            </p>
+            <p className="mt-2 text-sm text-slate-400">{homeMeta.subtitle}</p>
           </div>
 
           <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-3">
@@ -85,7 +104,7 @@ function App() {
         <section className="grid gap-4 rounded-[2rem] border border-white/10 bg-white/[0.04] p-5 shadow-2xl">
           <div>
             <p className="text-sm font-bold text-amber-200">
-              v2.4 任務輸入器 MVP
+              v2.5 任務完成 → 能力值變動
             </p>
             <h2 className="mt-2 text-2xl font-black">今日啟動流程</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
@@ -112,7 +131,7 @@ function App() {
               onKeyDown={(event) => {
                 if (event.key === "Enter") addTask();
               }}
-              placeholder="輸入今日要完成的任務，例如：整理資安清單 30 分鐘"
+              placeholder="輸入今日任務，例如：整理資安清單 30 分鐘"
               className="rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-cyan-300/60"
             />
 
@@ -141,7 +160,7 @@ function App() {
             <div className="mb-3 flex items-center justify-between">
               <p className="text-sm font-black text-white">今日任務清單</p>
               <p className="text-xs text-slate-400">
-                已完成 {completedCount} / {tasks.length}
+                已完成 {completedTasks.length} / {tasks.length}｜成長 +{totalReward}
               </p>
             </div>
 
@@ -151,34 +170,43 @@ function App() {
               </p>
             ) : (
               <div className="space-y-2">
-                {tasks.map((task) => (
-                  <button
-                    key={task.id}
-                    onClick={() => toggleTask(task.id)}
-                    className="flex w-full items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-900/70 p-3 text-left"
-                  >
-                    <div>
-                      <span className="mb-1 inline-flex rounded-full bg-cyan-300/10 px-2 py-1 text-[10px] font-black text-cyan-100">
-                        {task.type}
-                      </span>
-                      <p
-                        className={`text-sm font-bold ${
-                          task.done
-                            ? "text-slate-500 line-through"
-                            : "text-slate-100"
-                        }`}
-                      >
-                        {task.text}
-                      </p>
-                    </div>
+                {tasks.map((task) => {
+                  const reward = rewardMap[task.type] ?? {};
+                  return (
+                    <button
+                      key={task.id}
+                      onClick={() => toggleTask(task.id)}
+                      className="flex w-full items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-900/70 p-3 text-left"
+                    >
+                      <div>
+                        <span className="mb-1 inline-flex rounded-full bg-cyan-300/10 px-2 py-1 text-[10px] font-black text-cyan-100">
+                          {task.type}
+                        </span>
+                        <p
+                          className={`text-sm font-bold ${
+                            task.done
+                              ? "text-slate-500 line-through"
+                              : "text-slate-100"
+                          }`}
+                        >
+                          {task.text}
+                        </p>
+                        <p className="mt-1 text-[11px] text-slate-500">
+                          獎勵：
+                          {Object.entries(reward)
+                            .map(([key, value]) => `${key}+${value}`)
+                            .join("、")}
+                        </p>
+                      </div>
 
-                    <CheckCircle2
-                      className={`h-5 w-5 shrink-0 ${
-                        task.done ? "text-emerald-300" : "text-slate-600"
-                      }`}
-                    />
-                  </button>
-                ))}
+                      <CheckCircle2
+                        className={`h-5 w-5 shrink-0 ${
+                          task.done ? "text-emerald-300" : "text-slate-600"
+                        }`}
+                      />
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -209,7 +237,7 @@ function App() {
           </div>
 
           <div className="grid gap-3">
-            {homeStats.map((stat) => (
+            {currentStats.map((stat) => (
               <div key={stat.label}>
                 <div className="mb-1 flex justify-between text-xs">
                   <span className="font-bold text-slate-300">{stat.label}</span>
@@ -227,7 +255,7 @@ function App() {
         </section>
 
         <footer className="mt-auto pt-8 text-center text-xs text-slate-500">
-          v2.4｜任務輸入器 MVP 已接入｜下一步：任務轉能力值
+          v2.5｜任務完成會影響能力值｜下一步：任務資料拆檔
         </footer>
       </section>
     </main>
