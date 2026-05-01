@@ -233,6 +233,43 @@ function App() {
           </div>
         </section>
 
+        <section className="mt-6 rounded-[2rem] border border-amber-200/10 bg-amber-200/[0.06] p-5">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-black tracking-[0.25em] text-amber-200">
+                DAILY SETTLEMENT
+              </p>
+              <h2 className="mt-2 text-lg font-black">每日結算面板</h2>
+            </div>
+            <div className="rounded-2xl bg-amber-200 px-4 py-2 text-sm font-black text-slate-950">
+              {dailyStatus}
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-4">
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <p className="text-xs text-slate-400">任務總數</p>
+              <p className="mt-2 text-2xl font-black">{tasks.length}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <p className="text-xs text-slate-400">完成任務</p>
+              <p className="mt-2 text-2xl font-black">{completedTasks.length}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <p className="text-xs text-slate-400">完成率</p>
+              <p className="mt-2 text-2xl font-black">{completionRate}%</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <p className="text-xs text-slate-400">今日成長</p>
+              <p className="mt-2 text-2xl font-black">+{totalReward}</p>
+            </div>
+          </div>
+
+          <p className="mt-4 text-xs leading-5 text-slate-400">
+            今日結算會根據已完成任務即時更新。這是未來每日回顧、Boss 戰門檻與能力成長曲線的基礎。
+          </p>
+        </section>
+
         <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {homeModules.map((item) => {
             const Icon = iconMap[item.icon] ?? BrainCircuit;
@@ -276,7 +313,7 @@ function App() {
         </section>
 
         <footer className="mt-auto pt-8 text-center text-xs text-slate-500">
-          v2.5｜任務完成會影響能力值｜下一步：任務資料拆檔
+          v2.8｜每日結算面板已接入｜下一步：第一個 Boss 戰
         </footer>
       </section>
     </main>
