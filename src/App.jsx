@@ -12,6 +12,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { homeMeta, homeModules, homeStats } from "./data/homeConfig";
+import { getTaskReward, rewardMap, taskTypes } from "./data/taskConfig";
 
 const iconMap = { BrainCircuit, Map, Swords, ShieldCheck };
 
@@ -67,7 +68,7 @@ function App() {
     const next = homeStats.map((stat) => ({ ...stat }));
 
     completedTasks.forEach((task) => {
-      const reward = rewardMap[task.type] ?? {};
+      const reward = getTaskReward(task.type);
       Object.entries(reward).forEach(([label, value]) => {
         const target = next.find((stat) => stat.label === label);
         if (target) target.value = clamp(target.value + value);
@@ -78,7 +79,7 @@ function App() {
   }, [completedTasks]);
 
   const totalReward = completedTasks.reduce((sum, task) => {
-    const reward = rewardMap[task.type] ?? {};
+    const reward = getTaskReward(task.type);
     return sum + Object.values(reward).reduce((a, b) => a + b, 0);
   }, 0);
 
@@ -171,7 +172,7 @@ function App() {
             ) : (
               <div className="space-y-2">
                 {tasks.map((task) => {
-                  const reward = rewardMap[task.type] ?? {};
+                  const reward = getTaskReward(task.type);
                   return (
                     <button
                       key={task.id}
