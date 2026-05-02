@@ -18,6 +18,7 @@ import {
   Trash2,
   Trophy,
   Users,
+  Camera,
   Zap,
 } from "lucide-react";
 import { getTaskReward, taskTypes } from "./data/taskConfig";
@@ -351,6 +352,7 @@ export default function App() {
     return saved.length ? saved : missionTemplates.map(createTemplateTask);
   });
   const [bossMessage, setBossMessage] = useState("");
+  const [scoutImage, setScoutImage] = useState(null);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
@@ -427,6 +429,30 @@ export default function App() {
     } else {
       setBossMessage("⚠️ 今日完成度偏低。建議先完成 2 個任務，再挑戰場域事件。");
     }
+  };
+
+  const handleScoutImage = (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    const previewUrl = URL.createObjectURL(file);
+    setScoutImage({
+      url: previewUrl,
+      name: file.name,
+      sizeKB: Math.round(file.size / 1024),
+      type: file.type || "image",
+      capturedAt: new Date().toLocaleString("zh-TW"),
+    });
+
+    event.target.value = "";
+  };
+
+  const clearScoutImage = () => {
+    if (scoutImage?.url) {
+      URL.revokeObjectURL(scoutImage.url);
+    }
+    setScoutImage(null);
   };
 
   return (
@@ -522,6 +548,76 @@ export default function App() {
             </button>
           </div>
         </div>
+
+        <section className="mb-5 rounded-2xl border border-cyan-300/25 bg-[#071424]/95 p-4 shadow-[0_0_28px_rgba(14,165,233,0.10)]">
+          <div className="mb-3 flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-black tracking-[0.3em] text-cyan-200">
+                FIELD SCOUT
+              </p>
+              <h2 className="mt-2 text-xl font-black text-[#f8d98c]">
+                現場偵查
+              </h2>
+              <p className="mt-2 text-xs leading-5 text-slate-300">
+                第一階段僅提供臨時拍照 / 選圖預覽，不保存、不上傳、不寫入證據庫。
+              </p>
+            </div>
+            <Camera className="h-7 w-7 shrink-0 text-cyan-200" />
+          </div>
+
+          <div className="rounded-xl border border-amber-300/20 bg-amber-300/10 p-3 text-xs leading-5 text-amber-100">
+            請勿拍攝機密文件、帳號密碼、客戶資料、內部 IP、門禁細節或未授權區域。
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-cyan-300/30 bg-cyan-300/10 px-5 py-3 text-sm font-black text-cyan-100">
+              <Camera className="h-5 w-5" />
+              拍攝 / 選擇偵查影像
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleScoutImage}
+                className="hidden"
+              />
+            </label>
+
+            <button
+              onClick={clearScoutImage}
+              disabled={!scoutImage}
+              className={`rounded-xl border px-5 py-3 text-sm font-black ${
+                scoutImage
+                  ? "border-red-300/30 bg-red-300/10 text-red-100"
+                  : "cursor-not-allowed border-white/10 bg-white/5 text-slate-600"
+              }`}
+            >
+              清除預覽
+            </button>
+          </div>
+
+          {scoutImage ? (
+            <div className="mt-4 overflow-hidden rounded-2xl border border-[#c9a45c]/35 bg-black/30">
+              <img
+                src={scoutImage.url}
+                alt="現場偵查預覽"
+                className="max-h-[420px] w-full object-contain"
+              />
+              <div className="grid gap-1 border-t border-white/10 p-3 text-xs text-slate-300">
+                <p className="font-black text-[#f8d98c]">偵查影像已取得</p>
+                <p>檔名：{scoutImage.name}</p>
+                <p>大小：約 {scoutImage.sizeKB} KB</p>
+                <p>時間：{scoutImage.capturedAt}</p>
+                <p className="text-cyan-200">
+                  目前不保存。離開、重新整理或清除後，此預覽會消失。
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-black/20 p-5 text-center text-sm text-slate-400">
+              尚未取得偵查影像。點擊上方按鈕測試相機 / 相簿入口。
+            </div>
+          )}
+        </section>
 
         <div className="grid gap-5 lg:grid-cols-[1fr_230px]">
           <section className="grid gap-4">
