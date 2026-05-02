@@ -1,0 +1,19 @@
+{
+  "name": "元場域指揮官",
+  "short_name": "元場域",
+  "description": "個人自用的現實任務遊戲化 PWA。",
+  "start_url": "/meta-field-commander/",
+  "scope": "/meta-field-commander/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#020617",
+  "theme_color": "#071424",
+  "icons": [
+    {
+      "src": "/meta-field-commander/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
